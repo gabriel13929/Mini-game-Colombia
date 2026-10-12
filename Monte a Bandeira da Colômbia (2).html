@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Monte a Bandeira da Colômbia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+@property --m { syntax: '<length>'; inherits: true; initial-value: 4px; }
+
+:root {
+  --yellow: #FCD116;
+  --blue: #003893;
+  --red: #CE1126;
+  --bg-a: #fff6c9;
+  --bg-b: #ffffff;
+  --bg-c: #dfe8ff;
+  --card: #ffffff;
+  --text: #0f1b3d;
+  --muted: #4a5675;
+  --frame: #0f1b3d;
+  --empty-bg: rgba(15, 27, 61, .08);
+  --empty-line: rgba(15, 27, 61, .35);
+  --shadow: 0 14px 34px rgba(0, 35, 120, .22);
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-a: #1a1d3a;
+    --bg-b: #0b1230;
+    --bg-c: #0a1a4d;
+    --card: #17224d;
+    --text: #f4f6ff;
+    --muted: #b6c0e3;
+    --frame: #050a22;
+    --empty-bg: rgba(255, 255, 255, .07);
+    --empty-line: rgba(255, 255, 255, .4);
+    --shadow: 0 14px 34px rgba(0, 0, 0, .5);
+  }
+}
+:root[data-theme="dark"] {
+  --bg-a: #1a1d3a;
+  --bg-b: #0b1230;
+  --bg-c: #0a1a4d;
+  --card: #17224d;
+  --text: #f4f6ff;
+  --muted: #b6c0e3;
+  --frame: #050a22;
+  --empty-bg: rgba(255, 255, 255, .07);
+  --empty-line: rgba(255, 255, 255, .4);
+  --shadow: 0 14px 34px rgba(0, 0, 0, .5);
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Fredoka', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  color: var(--text);
+  background-color: var(--bg-b);
+  background-image: linear-gradient(165deg, var(--bg-a) 0%, var(--bg-b) 45%, var(--bg-c) 100%);
+  background-attachment: fixed;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.stripe {
+  height: 10px;
+  background: linear-gradient(to bottom, var(--yellow) 0 50%, var(--blue) 50% 75%, var(--red) 75% 100%);
+}
+
+.app {
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto;
+  padding: 18px 14px 36px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+header { text-align: center; }
+h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 7.2vw, 2.6rem);
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  color: var(--text);
+}
+h1 .tri {
+  display: block;
+  width: 118px;
+  height: 8px;
+  margin: 10px auto 0;
+  border-radius: 8px;
+  background: linear-gradient(90deg, var(--yellow) 0 50%, var(--blue) 50% 75%, var(--red) 75% 100%);
+}
+.hint {
+  margin: 12px auto 0;
+  max-width: 34ch;
+  color: var(--muted);
+  font-size: 1.02rem;
+  line-height: 1.35;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+  max-width: 520px;
+}
+.stat {
+  background: var(--card);
+  border-radius: 16px;
+  padding: 10px 14px 12px;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(0, 35, 120, .12);
+  border-bottom: 5px solid var(--yellow);
+}
+.stat:nth-child(2) { border-bottom-color: var(--red); }
+.stat small { display: block; font-size: .85rem; color: var(--muted); font-weight: 500; }
+.stat strong { display: block; font-size: 1.9rem; line-height: 1.1; font-variant-numeric: tabular-nums; }
+
+/* ---------- Tabuleiro ---------- */
+.frame {
+  width: clamp(280px, 92vw, 520px);
+  padding: 8px;
+  border-radius: 26px;
+  background: var(--frame);
+  box-shadow: var(--shadow);
+}
+.board {
+  --m: 4px;
+  --t: 120px;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 19px;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  background: var(--frame);
+  transition: --m .45s ease;
+}
+.board.solved { --m: 0px; }
+
+.tile, .slot {
+  position: absolute;
+  width: 25%;
+  height: 25%;
+}
+.tile {
+  cursor: pointer;
+  transition: left .17s cubic-bezier(.3, .7, .3, 1), top .17s cubic-bezier(.3, .7, .3, 1);
+  z-index: 2;
+}
+.slot { z-index: 1; pointer-events: none; }
+.board.solved .tile { cursor: default; }
+
+.face {
+  position: absolute;
+  inset: var(--m);
+  border-radius: calc(var(--m) * 3.5);
+  background-image: var(--flag);
+  background-repeat: no-repeat;
+  background-size: calc(var(--t) * 4) calc(var(--t) * 4);
+  background-position:
+    calc(var(--c) * var(--t) * -1 - var(--m))
+    calc(var(--r) * var(--t) * -1 - var(--m));
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .14), inset 0 2px 0 rgba(255, 255, 255, .35);
+  transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+}
+.board.solved .face { box-shadow: none; }
+
+.num {
+  position: absolute;
+  right: calc(var(--m) + 5px);
+  bottom: calc(var(--m) + 4px);
+  min-width: 1.5em;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .38);
+  color: #fff;
+  font-size: clamp(.7rem, 3.2vw, 1rem);
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+  pointer-events: none;
+  transition: opacity .3s;
+}
+.board.nonum .num, .board.solved .num { opacity: 0; }
+
+.tile.movable:hover .face { filter: brightness(1.08); transform: scale(1.03); }
+.tile.movable:active .face { transform: scale(.94); }
+.tile.pop .face { animation: pop .22s ease; }
+.tile.nope .face { animation: nope .28s ease; }
+.tile:focus-visible { outline: none; }
+.tile:focus-visible .face { box-shadow: 0 0 0 4px #fff, 0 0 0 7px var(--blue); }
+
+@keyframes pop { 0% { transform: scale(.9); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
+@keyframes nope { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+/* quadrado vazio */
+.slot .face {
+  background-image: none;
+  background-color: var(--empty-bg);
+  border: 3px dashed var(--empty-line);
+  box-shadow: inset 0 4px 10px rgba(0, 0, 0, .18);
+  display: grid;
+  place-items: center;
+  color: var(--empty-line);
+  font-size: clamp(1.2rem, 6vw, 2rem);
+  transition: opacity .4s ease;
+}
+.slot .face::after { content: '✦'; }
+.board.solved .slot .face {
+  background-image: var(--flag);
+  border-color: transparent;
+  box-shadow: none;
+  color: transparent;
+}
+
+/* ---------- Botões ---------- */
+.actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: 100%; max-width: 520px; }
+button.btn {
+  font: inherit;
+  font-weight: 600;
+  font-size: 1.05rem;
+  border: 0;
+  border-radius: 14px;
+  padding: 13px 22px;
+  min-height: 48px;
+  cursor: pointer;
+  color: #fff;
+  transition: transform .12s ease, filter .12s ease;
+  box-shadow: 0 5px 0 rgba(0, 0, 0, .22);
+}
+button.btn:hover { filter: brightness(1.08); }
+button.btn:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0, 0, 0, .22); }
+button.btn:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; }
+.btn.shuffle { background: var(--red); flex: 1 1 150px; }
+.btn.reset { background: var(--blue); flex: 1 1 130px; }
+.btn.toggle { background: var(--yellow); color: #1a1a1a; flex: 1 1 100%; font-size: .95rem; padding: 9px 16px; min-height: 42px; }
+.btn.toggle[aria-pressed="false"] { background: var(--card); color: var(--text); }
+
+.foot { color: var(--muted); font-size: .9rem; text-align: center; }
+
+/* ---------- Saves ---------- */
+.btn.saves { background: #26356b; flex: 1 1 100%; }
+.panel {
+  position: relative;
+  width: min(94vw, 440px);
+  max-height: min(86vh, 640px);
+  display: flex;
+  flex-direction: column;
+  padding: 26px 16px 16px;
+  background: var(--card);
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+  animation: bounce .4s cubic-bezier(.2, 1.3, .4, 1);
+}
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 12px;
+  background: linear-gradient(to right, var(--yellow) 0 50%, var(--blue) 50% 75%, var(--red) 75% 100%);
+}
+.panel h2 { margin: 4px 0 12px; font-size: 1.5rem; text-align: center; }
+.save-form { display: flex; gap: 8px; }
+.save-form input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 1rem;
+  padding: 11px 12px;
+  border-radius: 12px;
+  border: 2px solid var(--empty-line);
+  background: var(--bg-b);
+  color: var(--text);
+}
+.save-form input:focus-visible { outline: 3px solid var(--blue); outline-offset: 1px; }
+.save-form .btn { padding: 11px 16px; background: var(--red); font-size: 1rem; }
+.save-msg { min-height: 1.4em; margin: 8px 2px; font-size: .9rem; color: var(--muted); }
+.save-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 2px 2px 4px;
+  list-style: none;
+}
+.save-empty { text-align: center; color: var(--muted); padding: 18px 8px; }
+.save-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--bg-a);
+  border-left: 6px solid var(--blue);
+}
+.save-item:nth-child(3n+2) { border-left-color: var(--yellow); }
+.save-item:nth-child(3n) { border-left-color: var(--red); }
+.save-item .info strong { display: block; font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.save-item .info small { color: var(--muted); font-size: .85rem; }
+.save-item .row { display: flex; gap: 8px; }
+.mini {
+  font: inherit;
+  font-weight: 600;
+  font-size: .92rem;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 2px solid transparent;
+  border-radius: 11px;
+  cursor: pointer;
+  color: #fff;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, .2);
+}
+.mini:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(0, 0, 0, .2); }
+.mini:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+.mini.load { background: var(--blue); flex: 1; }
+.mini.del { background: transparent; color: var(--red); border-color: var(--red); box-shadow: none; }
+.mini.del.confirm { background: var(--red); color: #fff; }
+.panel > .btn { margin-top: 12px; background: var(--blue); }
+
+/* ---------- Vitória ---------- */
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(5, 10, 34, .6);
+}
+.overlay.show { display: flex; animation: fade .3s ease; }
+.win {
+  position: relative;
+  width: min(92vw, 400px);
+  padding: 28px 22px 24px;
+  text-align: center;
+  background: var(--card);
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, .5);
+  animation: bounce .6s cubic-bezier(.2, 1.4, .4, 1);
+}
+.win::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 14px;
+  background: linear-gradient(to right, var(--yellow) 0 50%, var(--blue) 50% 75%, var(--red) 75% 100%);
+}
+.win .big { font-size: 3.4rem; line-height: 1; margin-top: 8px; animation: wiggle 1s ease .5s 2; display: inline-block; }
+.win h2 { margin: 8px 0 4px; font-size: 1.9rem; }
+.win p { margin: 0; color: var(--muted); }
+.win .res { display: flex; gap: 10px; margin: 18px 0; }
+.win .res div { flex: 1; background: var(--bg-a); border-radius: 14px; padding: 10px 6px; }
+:root[data-theme="dark"] .win .res div { background: rgba(255,255,255,.08); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .win .res div { background: rgba(255,255,255,.08); } }
+.win .res small { display: block; color: var(--muted); font-size: .85rem; }
+.win .res strong { font-size: 1.7rem; font-variant-numeric: tabular-nums; }
+.win .btn { width: 100%; background: var(--red); }
+
+.confetti { position: fixed; inset: 0; z-index: 60; pointer-events: none; overflow: hidden; }
+.confetti i {
+  position: absolute;
+  top: -20px;
+  width: 11px;
+  height: 16px;
+  border-radius: 3px;
+  opacity: 0;
+  animation: fall linear forwards;
+}
+
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes bounce { 0% { transform: scale(.5) translateY(40px); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-12deg) scale(1.1); } 75% { transform: rotate(12deg) scale(1.1); } }
+@keyframes fall {
+  0% { transform: translate3d(0, 0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate3d(var(--dx), 108vh, 0) rotate(var(--rot)); opacity: 1; }
+}
+@keyframes flash { 0% { filter: brightness(1); } 40% { filter: brightness(1.35); } 100% { filter: brightness(1); } }
+.board.solved { animation: flash .8s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tile, .face, .board, .win, .panel, .win .big, .overlay.show { transition: none !important; animation: none !important; }
+  .confetti { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="stripe"></div>
+<main class="app">
+  <header>
+    <h1>Monte a Bandeira da Colômbia 🇨🇴<span class="tri"></span></h1>
+    <p class="hint">Deslize as peças para o espaço vazio e monte a bandeira!</p>
+  </header>
+
+  <section class="stats" aria-live="polite">
+    <div class="stat"><small>Movimentos</small><strong id="moves">0</strong></div>
+    <div class="stat"><small>Tempo</small><strong id="time">00:00</strong></div>
+  </section>
+
+  <div class="frame">
+    <div class="board" id="board" role="group" aria-label="Tabuleiro 4 por 4 da bandeira da Colômbia"></div>
+  </div>
+
+  <div class="actions">
+    <button class="btn shuffle" id="shuffle" type="button">🔀 Embaralhar</button>
+    <button class="btn reset" id="reset" type="button">↺ Reiniciar</button>
+    <button class="btn saves" id="savesBtn" type="button">💾 Saves</button>
+    <button class="btn toggle" id="toggleNum" type="button" aria-pressed="true">Números nas peças: ligado</button>
+  </div>
+  <p class="foot">Toque ou clique numa peça ao lado do espaço vazio. Também dá para deslizar o dedo ou usar as setas do teclado.</p>
+</main>
+
+<div class="overlay" id="overlay" role="dialog" aria-modal="true" aria-labelledby="winTitle">
+  <div class="win">
+    <div class="big">🏆</div>
+    <h2 id="winTitle">Parabéns! 🇨🇴</h2>
+    <p>Você montou a bandeira da Colômbia!</p>
+    <div class="res">
+      <div><small>Tempo</small><strong id="winTime">00:00</strong></div>
+      <div><small>Movimentos</small><strong id="winMoves">0</strong></div>
+    </div>
+    <button class="btn" id="again" type="button">Jogar de novo</button>
+  </div>
+</div>
+
+<div class="overlay" id="savesOverlay" role="dialog" aria-modal="true" aria-labelledby="savesTitle">
+  <div class="panel">
+    <h2 id="savesTitle">💾 Seus saves</h2>
+    <div class="save-form">
+      <input id="saveName" type="text" maxlength="30" placeholder="Nome do save (opcional)" aria-label="Nome do save" autocomplete="off">
+      <button class="btn" id="saveNow" type="button">Salvar</button>
+    </div>
+    <div class="save-msg" id="saveMsg" role="status" aria-live="polite"></div>
+    <ul class="save-list" id="saveList"></ul>
+    <button class="btn" id="closeSaves" type="button">Fechar</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  var N = 4;
+  var SOLVED = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,0];
+
+  var boardEl = document.getElementById('board');
+  var movesEl = document.getElementById('moves');
+  var timeEl = document.getElementById('time');
+  var overlay = document.getElementById('overlay');
+  var toggleBtn = document.getElementById('toggleNum');
+
+  // Bandeira: amarelo (1/2), azul (1/4), vermelho (1/4), com leve brilho contínuo
+  var svg =
+    "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 400' preserveAspectRatio='none'>" +
+    "<defs><linearGradient id='s' x1='0' y1='0' x2='1' y2='1'>" +
+    "<stop offset='0' stop-color='#fff' stop-opacity='.28'/>" +
+    "<stop offset='.5' stop-color='#fff' stop-opacity='0'/>" +
+    "<stop offset='1' stop-color='#000' stop-opacity='.2'/></linearGradient></defs>" +
+    "<rect width='400' height='200' fill='#FCD116'/>" +
+    "<rect y='200' width='400' height='100' fill='#003893'/>" +
+    "<rect y='300' width='400' height='100' fill='#CE1126'/>" +
+    "<rect width='400' height='400' fill='url(#s)'/></svg>";
+  boardEl.style.setProperty('--flag', 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")');
+
+  var state = SOLVED.slice();
+  var initial = SOLVED.slice();
+  var moves = 0, startTime = null, timerId = null, elapsed = 0, won = false, ignoreClick = false;
+  var els = {};
+
+  function build() {
+    boardEl.innerHTML = '';
+    var slot = document.createElement('div');
+    slot.className = 'slot';
+    slot.style.setProperty('--r', 3);
+    slot.style.setProperty('--c', 3);
+    slot.innerHTML = '<div class="face"></div>';
+    boardEl.appendChild(slot);
+    els[0] = slot;
+
+    for (var v = 1; v <= 15; v++) {
+      var t = document.createElement('div');
+      t.className = 'tile';
+      t.setAttribute('role', 'button');
+      t.setAttribute('tabindex', '0');
+      t.dataset.v = v;
+      t.style.setProperty('--r', Math.floor((v - 1) / N));
+      t.style.setProperty('--c', (v - 1) % N);
+      t.innerHTML = '<div class="face"></div><span class="num">' + v + '</span>';
+      boardEl.appendChild(t);
+      els[v] = t;
+    }
+  }
+
+  function sizeBoard() { boardEl.style.setProperty('--t', (boardEl.clientWidth / N) + 'px'); }
+
+  function fmt(ms) {
+    var s = Math.floor(ms / 1000);
+    var m = Math.floor(s / 60);
+    s = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function render() {
+    var e = state.indexOf(0);
+    var er = Math.floor(e / N), ec = e % N;
+    for (var i = 0; i < state.length; i++) {
+      var v = state[i];
+      var el = els[v];
+      el.style.left = (i % N) * 25 + '%';
+      el.style.top = Math.floor(i / N) * 25 + '%';
+      if (v !== 0) {
+        var adj = Math.abs(Math.floor(i / N) - er) + Math.abs((i % N) - ec) === 1;
+        el.classList.toggle('movable', adj && !won);
+        el.setAttribute('aria-label', 'Peça ' + v + (adj ? ', pode mover' : ''));
+      }
+    }
+    movesEl.textContent = moves;
+  }
+
+  function isSolved() {
+    for (var i = 0; i < SOLVED.length; i++) if (state[i] !== SOLVED[i]) return false;
+    return true;
+  }
+
+  // Embaralha fazendo jogadas legais a partir do estado resolvido: sempre solucionável.
+  function scramble() {
+    var s = SOLVED.slice();
+    var e = 15, last = -1, steps = 160 + Math.floor(Math.random() * 60);
+    for (var k = 0; k < steps; k++) {
+      var r = Math.floor(e / N), c = e % N, opts = [];
+      if (r > 0) opts.push(e - N);
+      if (r < N - 1) opts.push(e + N);
+      if (c > 0) opts.push(e - 1);
+      if (c < N - 1) opts.push(e + 1);
+      opts = opts.filter(function (x) { return x !== last; });
+      var pick = opts[Math.floor(Math.random() * opts.length)];
+      s[e] = s[pick]; s[pick] = 0; last = e; e = pick;
+    }
+    return s;
+  }
+
+  function stopTimer() { if (timerId) { clearInterval(timerId); timerId = null; } }
+  function startTimer() {
+    if (timerId || startTime !== null) return;
+    startTime = performance.now() - elapsed;
+    timerId = setInterval(function () {
+      elapsed = performance.now() - startTime;
+      timeEl.textContent = fmt(elapsed);
+    }, 200);
+  }
+
+  function resetStats() {
+    stopTimer();
+    moves = 0; startTime = null; elapsed = 0; won = false;
+    timeEl.textContent = '00:00';
+    boardEl.classList.remove('solved');
+    overlay.classList.remove('show');
+    clearConfetti();
+  }
+
+  function newGame() {
+    var s;
+    do { s = scramble(); } while (s.join() === SOLVED.join());
+    initial = s.slice();
+    state = s;
+    resetStats();
+    render();
+  }
+
+  function restart() {
+    state = initial.slice();
+    resetStats();
+    render();
+  }
+
+  function tryMove(idx) {
+    if (won) return false;
+    var e = state.indexOf(0);
+    var d = Math.abs(Math.floor(idx / N) - Math.floor(e / N)) + Math.abs((idx % N) - (e % N));
+    var v = state[idx];
+    if (d !== 1) {
+      var el = els[v];
+      el.classList.remove('nope'); void el.offsetWidth; el.classList.add('nope');
+      return false;
+    }
+    startTimer();
+    state[e] = v; state[idx] = 0;
+    moves++;
+    render();
+    var t = els[v];
+    t.classList.remove('pop'); void t.offsetWidth; t.classList.add('pop');
+    if (isSolved()) win();
+    return true;
+  }
+
+  function win() {
+    won = true;
+    elapsed = startTime !== null ? performance.now() - startTime : elapsed;
+    stopTimer();
+    timeEl.textContent = fmt(elapsed);
+    render();
+    boardEl.classList.add('solved');
+    setTimeout(function () {
+      document.getElementById('winTime').textContent = fmt(elapsed);
+      document.getElementById('winMoves').textContent = moves;
+      overlay.classList.add('show');
+      confetti();
+      document.getElementById('again').focus();
+    }, 900);
+  }
+
+  function confetti() {
+    clearConfetti();
+    var box = document.createElement('div');
+    box.className = 'confetti';
+    var colors = ['#FCD116', '#003893', '#CE1126'];
+    for (var i = 0; i < 90; i++) {
+      var p = document.createElement('i');
+      p.style.left = Math.random() * 100 + '%';
+      p.style.background = colors[i % 3];
+      p.style.setProperty('--dx', (Math.random() * 160 - 80) + 'px');
+      p.style.setProperty('--rot', (Math.random() * 900 - 450) + 'deg');
+      p.style.animationDuration = (2.4 + Math.random() * 2.2) + 's';
+      p.style.animationDelay = (Math.random() * 1.2) + 's';
+      box.appendChild(p);
+    }
+    document.body.appendChild(box);
+    setTimeout(clearConfetti, 6500);
+  }
+  function clearConfetti() {
+    var c = document.querySelector('.confetti');
+    if (c) c.remove();
+  }
+
+  // Clique / toque
+  boardEl.addEventListener('click', function (ev) {
+    if (ignoreClick) return;
+    var t = ev.target.closest('.tile');
+    if (!t) return;
+    tryMove(state.indexOf(parseInt(t.dataset.v, 10)));
+  });
+
+  // Deslizar o dedo / mouse sobre uma peça
+  var sx = 0, sy = 0, sTile = null;
+  boardEl.addEventListener('pointerdown', function (ev) {
+    sTile = ev.target.closest('.tile');
+    sx = ev.clientX; sy = ev.clientY;
+  });
+  boardEl.addEventListener('pointerup', function (ev) {
+    if (!sTile) return;
+    var dx = ev.clientX - sx, dy = ev.clientY - sy;
+    var tile = sTile; sTile = null;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) < 18) return;
+    var i = state.indexOf(parseInt(tile.dataset.v, 10));
+    var e = state.indexOf(0), target;
+    if (Math.abs(dx) > Math.abs(dy)) target = i + (dx > 0 ? 1 : -1);
+    else target = i + (dy > 0 ? N : -N);
+    var sameRow = Math.floor(target / N) === Math.floor(i / N);
+    var horizontal = Math.abs(dx) > Math.abs(dy);
+    if (target === e && (!horizontal || sameRow)) {
+      ignoreClick = true;
+      setTimeout(function () { ignoreClick = false; }, 60);
+      tryMove(i);
+    }
+  });
+  boardEl.addEventListener('pointercancel', function () { sTile = null; });
+
+  // Teclado: setas movem a peça para o espaço vazio; Enter/Espaço na peça focada
+  document.addEventListener('keydown', function (ev) {
+    if (overlay.classList.contains('show') || savesOverlay.classList.contains('show')) return;
+    var e = state.indexOf(0), idx = -1, r = Math.floor(e / N), c = e % N;
+    if (ev.key === 'ArrowUp' && r < N - 1) idx = e + N;
+    else if (ev.key === 'ArrowDown' && r > 0) idx = e - N;
+    else if (ev.key === 'ArrowLeft' && c < N - 1) idx = e + 1;
+    else if (ev.key === 'ArrowRight' && c > 0) idx = e - 1;
+    else if ((ev.key === 'Enter' || ev.key === ' ') && document.activeElement && document.activeElement.classList.contains('tile')) {
+      ev.preventDefault();
+      tryMove(state.indexOf(parseInt(document.activeElement.dataset.v, 10)));
+      return;
+    } else return;
+    ev.preventDefault();
+    tryMove(idx);
+  });
+
+  document.getElementById('shuffle').addEventListener('click', newGame);
+  document.getElementById('reset').addEventListener('click', restart);
+  document.getElementById('again').addEventListener('click', newGame);
+  toggleBtn.addEventListener('click', function () {
+    var on = toggleBtn.getAttribute('aria-pressed') === 'true';
+    toggleBtn.setAttribute('aria-pressed', on ? 'false' : 'true');
+    toggleBtn.textContent = 'Números nas peças: ' + (on ? 'desligado' : 'ligado');
+    boardEl.classList.toggle('nonum', on);
+  });
+
+  // ---------- Sistema de saves ----------
+  var KEY = 'bandeira-colombia-saves-v1';
+  var memSaves = [];
+  var savesOverlay = document.getElementById('savesOverlay');
+  var saveList = document.getElementById('saveList');
+  var saveName = document.getElementById('saveName');
+  var saveMsg = document.getElementById('saveMsg');
+  var pendingDelete = null;
+
+  function readSaves() {
+    try {
+      var raw = localStorage.getItem(KEY);
+      var a = raw ? JSON.parse(raw) : [];
+      return Array.isArray(a) ? a : [];
+    } catch (e) { return memSaves; }
+  }
+  function writeSaves(a) {
+    memSaves = a;
+    try { localStorage.setItem(KEY, JSON.stringify(a)); return true; }
+    catch (e) { return false; }
+  }
+  function validState(a) {
+    if (!Array.isArray(a) || a.length !== 16) return false;
+    var seen = {};
+    for (var i = 0; i < 16; i++) {
+      if (typeof a[i] !== 'number' || a[i] < 0 || a[i] > 15 || seen[a[i]]) return false;
+      seen[a[i]] = 1;
+    }
+    return true;
+  }
+  function setMsg(t) { saveMsg.textContent = t || ''; }
+  function currentElapsed() { return startTime !== null ? performance.now() - startTime : elapsed; }
+  function mkBtn(label, cls) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = cls;
+    b.textContent = label;
+    return b;
+  }
+  function fmtDate(ts) {
+    try {
+      return new Date(ts).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return new Date(ts).toString(); }
+  }
+
+  function renderSaves() {
+    var list = readSaves();
+    saveList.innerHTML = '';
+    if (!list.length) {
+      var empty = document.createElement('li');
+      empty.className = 'save-empty';
+      empty.textContent = 'Nenhum save ainda. Dê um nome e toque em Salvar.';
+      saveList.appendChild(empty);
+      return;
+    }
+    list.forEach(function (s) {
+      var li = document.createElement('li');
+      li.className = 'save-item';
+      var info = document.createElement('div');
+      info.className = 'info';
+      var n = document.createElement('strong');
+      n.textContent = s.name || 'Sem nome';
+      var d = document.createElement('small');
+      d.textContent = fmtDate(s.at) + ' · ' + s.moves + ' mov. · ' + fmt(s.elapsed || 0);
+      info.appendChild(n);
+      info.appendChild(d);
+      var row = document.createElement('div');
+      row.className = 'row';
+      var load = mkBtn('Carregar', 'mini load');
+      load.addEventListener('click', function () { loadSave(s.id); });
+      var confirming = pendingDelete === s.id;
+      var del = mkBtn(confirming ? 'Confirmar exclusão?' : 'Excluir', 'mini del' + (confirming ? ' confirm' : ''));
+      del.addEventListener('click', function () {
+        if (pendingDelete === s.id) deleteSave(s.id);
+        else { pendingDelete = s.id; renderSaves(); }
+      });
+      row.appendChild(load);
+      row.appendChild(del);
+      li.appendChild(info);
+      li.appendChild(row);
+      saveList.appendChild(li);
+    });
+  }
+
+  function saveGame() {
+    if (won) { setMsg('Esta partida já terminou. Embaralhe para jogar de novo.'); return; }
+    var list = readSaves().slice();
+    var name = saveName.value.trim() || ('Partida ' + (list.length + 1));
+    list.unshift({
+      id: Date.now() + '-' + Math.floor(Math.random() * 10000),
+      name: name.slice(0, 30),
+      at: Date.now(),
+      state: state.slice(),
+      initial: initial.slice(),
+      moves: moves,
+      elapsed: Math.floor(currentElapsed())
+    });
+    var ok = writeSaves(list);
+    saveName.value = '';
+    pendingDelete = null;
+    renderSaves();
+    setMsg(ok ? 'Partida salva!' : 'Este navegador não deixou gravar. O save vale só até fechar a página.');
+  }
+
+  function loadSave(id) {
+    var s = readSaves().filter(function (x) { return x.id === id; })[0];
+    if (!s || !validState(s.state)) { setMsg('Não foi possível carregar este save.'); return; }
+    resetStats();
+    state = s.state.slice();
+    initial = validState(s.initial) ? s.initial.slice() : s.state.slice();
+    moves = s.moves || 0;
+    elapsed = s.elapsed || 0;
+    timeEl.textContent = fmt(elapsed);
+    render();
+    closeSaves();
+  }
+
+  function deleteSave(id) {
+    var list = readSaves().filter(function (x) { return x.id !== id; });
+    writeSaves(list);
+    pendingDelete = null;
+    renderSaves();
+    setMsg('Save excluído.');
+  }
+
+  function openSaves() {
+    pendingDelete = null;
+    setMsg('');
+    renderSaves();
+    savesOverlay.classList.add('show');
+    document.getElementById('closeSaves').focus();
+  }
+  function closeSaves() { savesOverlay.classList.remove('show'); pendingDelete = null; }
+
+  document.getElementById('savesBtn').addEventListener('click', openSaves);
+  document.getElementById('closeSaves').addEventListener('click', closeSaves);
+  document.getElementById('saveNow').addEventListener('click', saveGame);
+  saveName.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); saveGame(); } });
+  savesOverlay.addEventListener('click', function (ev) { if (ev.target === savesOverlay) closeSaves(); });
+  document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && savesOverlay.classList.contains('show')) closeSaves(); });
+
+  build();
+  sizeBoard();
+  if (window.ResizeObserver) new ResizeObserver(sizeBoard).observe(boardEl);
+  window.addEventListener('resize', sizeBoard);
+  newGame();
+})();
+</script>
+</body>
+</html>
